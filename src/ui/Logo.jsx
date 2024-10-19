@@ -7,6 +7,11 @@ const StyledLogo = styled.div`
 const Img = styled.img`
   height: 9.6rem;
   width: auto;
+
+  /* Smaller Screens */
+  @media (max-width: 550px) {
+    display: none;
+  }
 `;
 
 export default function Logo() {
