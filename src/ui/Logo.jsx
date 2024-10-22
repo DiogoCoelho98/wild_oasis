@@ -9,7 +9,7 @@ const Img = styled.img`
   width: auto;
 
   /* Smaller Screens */
-  @media (max-width: 550px) {
+  @media (max-width: 700px) {
     display: none;
   }
 `;

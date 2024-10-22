@@ -10,15 +10,16 @@ const StyledSideBar = styled.aside`
   flex-direction: column;
   gap: 3.2rem;
 
-  /* Display the sidebar on the left and occupying both rows of the grid*/
+  /* Display sidebar on the left and occupying both rows of the grid*/
   grid-row: 1 / -1;
 
   /* Smaller Screens */
   @media (max-width: 768px) {
-    padding: 2rem 1.5rem;
+    padding: 2rem 0.4rem;
   }
-  @media (max-width: 550px) {
+  @media (max-width: 700px) {
     padding-top: 0;
+    gap: 1rem;
   }
 `;
 
