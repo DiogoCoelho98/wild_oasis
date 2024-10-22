@@ -1,5 +1,5 @@
 import { formatDistance, parseISO } from "date-fns";
-import { differenceInDays } from "date-fns/esm";
+import { differenceInDays } from "date-fns";
 
 // Number of days between two dates.
 export const subtractDates = (dateStr1, dateStr2) =>
@@ -10,7 +10,7 @@ export const formatDistanceFromNow = (dateStr) =>
   formatDistance(parseISO(dateStr), new Date(), {
     addSuffix: true, // Adds "ago" or "In" based on whether the date is past or future
   })
-    .replace("about ", "") // Removes "about"
+    .replace("about ", "")
     .replace("in", "In");
 
 // Returns today's date as an ISO string, with time set to either the start or end of the day depending on the options
