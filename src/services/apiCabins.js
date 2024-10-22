@@ -12,6 +12,21 @@ export async function getCabins() {
   return data;
 }
 
+// Querying supabase client to create a Cabin row
+export async function createCabin(newCabin) {
+  const { data, error } = await supabase
+    .from("cabins")
+    .insert([newCabin])
+    .select();
+
+  if (error) {
+    console.error(error.message);
+    throw new Error("Cabin could not be added");
+  }
+
+  return data;
+}
+
 // Querying supabase client to delete a Cabin row by the ID
 export async function deleteCabin(id) {
   const { data, error } = await supabase.from("cabins").delete().eq("id", id);
