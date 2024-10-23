@@ -17,7 +17,9 @@ export default function Cabins() {
 
       <Row>
         <CabinTable />
-        <Button onClick={() => setShowForm(!showForm)}>Add new cabin</Button>
+        <Button onClick={() => setShowForm((showForm) => !showForm)}>
+          Add new cabin
+        </Button>
         {showForm && <CreateCabinForm />}
       </Row>
     </>
