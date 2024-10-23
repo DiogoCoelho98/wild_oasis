@@ -67,11 +67,12 @@ export default function CreateCabinForm() {
       const message =
         error.response?.data?.message || error.message || "An error occurred";
       toast.error(message);
+      /* console.log("Error from server:", message); */
     },
   });
 
   function handleOnSubmit(formData) {
-    mutate(formData);
+    mutate({ ...formData, image: formData.image[0] });
   }
 
   function handleErrors(formErrors) {
@@ -124,10 +125,6 @@ export default function CreateCabinForm() {
         message: "Description cannot exceed 500 characters",
       },
     },
-    /* image: {
-      required: "Please upload a cabin photo",
-      validate: (value) => value.length > 0 || "Image is required",
-    }, */
   };
 
   return (
@@ -197,7 +194,12 @@ export default function CreateCabinForm() {
 
       <FormRow>
         <Label htmlFor="image">Cabin photo</Label>
-        <FileInput id="image" accept="image/*" />
+        <FileInput
+          id="image"
+          accept="image/*"
+          {...register("image", { required: "Please upload a cabin photo" })}
+        />
+        {errors.image && <Error>{errors.image.message}</Error>}
       </FormRow>
 
       <FormRow>
