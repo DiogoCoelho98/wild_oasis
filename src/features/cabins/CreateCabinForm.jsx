@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCabin } from "../../services/apiCabins";
+import { useState } from "react";
 import styled from "styled-components";
 import Input from "../../ui/Input";
 import Form from "../../ui/Form";
@@ -44,17 +45,25 @@ const Error = styled.span`
   color: var(--color-red-700);
 `;
 
-export default function CreateCabinForm() {
+export default function CreateCabinForm({ cabinToEdit = {} }) {
+  const { id: editId, ...editValues } = cabinToEdit;
+
+  // DETERMINE IF THE CABIN WILL BE CREATED OR EDITED
+  const isEditSession = Boolean(editId);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
     getValues,
-  } = useForm();
+    setError,
+  } = useForm({
+    defaultValues: isEditSession ? editValues : {},
+  });
 
   const queryClient = useQueryClient();
-  const { mutate, isPending: isCreating } = useMutation({
+  const { mutate: mutateCreate, isPending: isCreating } = useMutation({
     mutationFn: createCabin,
     onSuccess: () => {
       toast.success("Cabin added successfully");
@@ -67,12 +76,61 @@ export default function CreateCabinForm() {
       const message =
         error.response?.data?.message || error.message || "An error occurred";
       toast.error(message);
-      /* console.log("Error from server:", message); */
     },
   });
 
+  const { mutate: mutateEdit, isPending: isEditing } = useMutation({
+    mutationFn: ({ newCabinData, id }) => createCabin(newCabinData, id),
+    onSuccess: () => {
+      toast.success("Cabin edited successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["cabins"],
+      });
+      reset();
+    },
+    onError: (error) => {
+      const message =
+        error.response?.data?.message || error.message || "An error occurred";
+      toast.error(message);
+    },
+  });
+
+  // PENDING STATE WHEN CREATING/EDITING
+  const isWorking = isCreating || isEditing;
+
   function handleOnSubmit(formData) {
-    mutate({ ...formData, image: formData.image[0] });
+    // DETERMINE THE IMG: NEW ONE OR EXISTING
+    const image =
+      typeof formData.image === "string" ? formData.image : formData.image[0];
+
+    // USE EXISTING IMG
+    const finalImage =
+      isEditSession && !formData.image[0] ? editValues.image : image;
+
+    // IMG TYPE VALIDATION ONLY IF NEW IMG 
+    const acceptedTypes = ["image/jpeg", "image/png"];
+    if (
+      !isEditSession &&
+      formData.image[0] &&
+      !acceptedTypes.includes(formData.image[0]?.type)
+    ) {
+      setError("image", {
+        type: "manual",
+        message:
+          "Invalid image format. Only .jpeg and .png formats are allowed.",
+      });
+      return;
+    }
+
+    // SUBMIT FORM WITH FINAL IMG
+    if (isEditSession) {
+      mutateEdit({
+        newCabinData: { ...formData, image: finalImage },
+        id: editId,
+      });
+    } else {
+      mutateCreate({ ...formData, image: finalImage });
+    }
   }
 
   function handleErrors(formErrors) {
@@ -135,6 +193,7 @@ export default function CreateCabinForm() {
           type="text"
           id="name"
           required
+          disabled={isWorking}
           {...register("name", formValidation.name)}
         />
         {errors?.name && <Error>{errors.name.message}</Error>}
@@ -148,6 +207,7 @@ export default function CreateCabinForm() {
           defaultValue={1}
           min={1}
           required
+          disabled={isWorking}
           {...register("maxCapacity", formValidation.maxCapacity)}
         />
         {errors.maxCapacity && <Error>{errors.maxCapacity.message}</Error>}
@@ -160,6 +220,7 @@ export default function CreateCabinForm() {
           id="regularPrice"
           defaultValue={1}
           min={1}
+          disabled={isWorking}
           required
           {...register("regularPrice", formValidation.regularPrice)}
         />
@@ -173,6 +234,7 @@ export default function CreateCabinForm() {
           id="discount"
           defaultValue={0}
           min={0}
+          disabled={isWorking}
           required
           {...register("discount", formValidation.discount)}
         />
@@ -186,6 +248,7 @@ export default function CreateCabinForm() {
           id="description"
           defaultValue=""
           placeholder="Add a brief description"
+          disabled={isWorking}
           required
           {...register("description", formValidation.description)}
         />
@@ -196,8 +259,10 @@ export default function CreateCabinForm() {
         <Label htmlFor="image">Cabin photo</Label>
         <FileInput
           id="image"
-          accept="image/*"
-          {...register("image", { required: "Please upload a cabin photo" })}
+          accept=".jpeg, .jpg, .png"
+          {...register("image", {
+            required: isEditSession ? false : "Please upload a cabin photo",
+          })}
         />
         {errors.image && <Error>{errors.image.message}</Error>}
       </FormRow>
@@ -206,7 +271,9 @@ export default function CreateCabinForm() {
         <Button variation="secondary" type="reset">
           Cancel
         </Button>
-        <Button disabled={isCreating}>Add cabin</Button>
+        <Button disabled={isWorking}>
+          {isEditSession ? "Edit" : "Create"}
+        </Button>
       </FormRow>
     </Form>
   );

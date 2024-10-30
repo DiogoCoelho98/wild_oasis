@@ -12,35 +12,42 @@ export async function getCabins() {
   return data;
 }
 
-// Querying supabase client to create a Cabin row
-export async function createCabin(newCabin) {
-  // Validate image type
-  const acceptedTypes = ["image/jpeg", "image/png"];
-  if (!acceptedTypes.includes(newCabin.image.type)) {
-    throw new Error(
-      "Invalid image format. Only .jpeg and .png formats are allowed"
-    );
-  }
+// Querying supabase client to create a Cabin
+export async function createCabin(newCabin, id) {
+  // ON EDIT --> CHECK IF THE USER WILL USE THE SAME IMAGE (SUPASE URL), OR A NEW IMG (FILE TYPE)
+  const hasImagePath = newCabin.image?.startsWith?.(supabaseUrl);
 
   const imgName = `${Math.random()}-${newCabin.image.name}`.replaceAll("/", "");
-  const imgPath = `${supabaseUrl}/storage/v1/object/public/cabin-image/${imgName}`;
+  // CHECKS IF THE IMAGE IS ALREADY IN SUPABASE, IF NOT A NEW ONE WILL BE ADDED
+  const imgPath = hasImagePath
+    ? newCabin.image
+    : `${supabaseUrl}/storage/v1/object/public/cabin-image/${imgName}`;
 
-  const { data, error } = await supabase
-    .from("cabins")
-    .insert([{ ...newCabin, image: imgPath }])
-    .select();
+  let query = supabase.from("cabins");
+
+  // CREATE CABIN IF NO ID
+  if (!id) {
+    query = query.insert([{ ...newCabin, image: imgPath }]);
+  }
+
+  // EDIT IF ID
+  if (id) {
+    query = query.update({ ...newCabin, image: imgPath }).eq("id", id);
+  }
+
+  const { data, error } = await query.select();
 
   if (error) {
     console.error(error.message);
     throw new Error("Cabin could not be added");
   }
 
-  // Upload a cabin image to supabase
+  // UPLOAD IMG TO STORAGE
   const { error: storageError } = await supabase.storage
     .from("cabin-image")
     .upload(imgName, newCabin.image);
 
-  // Delete cabin if updating error
+  // DELETE CABIN IF THERE'S A ERROR
   if (storageError) {
     await supabase.from("cabins").delete().eq("id", data.id);
     console.error(storageError.message);
@@ -50,7 +57,7 @@ export async function createCabin(newCabin) {
   return data;
 }
 
-// Querying supabase client to delete a Cabin row by the ID
+// Querying supabase client to delete a Cabin by the ID
 export async function deleteCabin(id) {
   const { data, error } = await supabase.from("cabins").delete().eq("id", id);
 
