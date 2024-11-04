@@ -12,13 +12,13 @@ export async function getCabins() {
   return data;
 }
 
-// Querying supabase client to create a Cabin
-export async function createCabin(newCabin, id) {
+// Querying supabase client to create and edit a Cabin
+export async function createEditCabin(newCabin, id) {
   // ON EDIT --> CHECK IF THE USER WILL USE THE SAME IMAGE (SUPASE URL), OR A NEW IMG (FILE TYPE)
   const hasImagePath = newCabin.image?.startsWith?.(supabaseUrl);
 
   const imgName = `${Math.random()}-${newCabin.image.name}`.replaceAll("/", "");
-  // CHECKS IF THE IMAGE IS ALREADY IN SUPABASE, IF NOT A NEW ONE WILL BE ADDED
+  // CHECK IF THE IMAGE IS ALREADY IN SUPABASE, IF NOT A NEW ONE WILL BE ADDED
   const imgPath = hasImagePath
     ? newCabin.image
     : `${supabaseUrl}/storage/v1/object/public/cabin-image/${imgName}`;

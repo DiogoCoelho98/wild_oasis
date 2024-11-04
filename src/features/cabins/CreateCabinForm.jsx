@@ -1,7 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createCabin } from "../../services/apiCabins";
-import { useState } from "react";
+import { createEditCabin } from "../../services/apiCabins";
 import styled from "styled-components";
 import Input from "../../ui/Input";
 import Form from "../../ui/Form";
@@ -64,7 +63,7 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
 
   const queryClient = useQueryClient();
   const { mutate: mutateCreate, isPending: isCreating } = useMutation({
-    mutationFn: createCabin,
+    mutationFn: createEditCabin,
     onSuccess: () => {
       toast.success("Cabin added successfully");
       queryClient.invalidateQueries({
@@ -80,7 +79,7 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
   });
 
   const { mutate: mutateEdit, isPending: isEditing } = useMutation({
-    mutationFn: ({ newCabinData, id }) => createCabin(newCabinData, id),
+    mutationFn: ({ newCabinData, id }) => createEditCabin(newCabinData, id),
     onSuccess: () => {
       toast.success("Cabin edited successfully");
       queryClient.invalidateQueries({
@@ -99,7 +98,7 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
   const isWorking = isCreating || isEditing;
 
   function handleOnSubmit(formData) {
-    // DETERMINE THE IMG: NEW ONE OR EXISTING
+    // DETERMINE THE IMG: NEW OR EXISTING
     const image =
       typeof formData.image === "string" ? formData.image : formData.image[0];
 
@@ -107,7 +106,7 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
     const finalImage =
       isEditSession && !formData.image[0] ? editValues.image : image;
 
-    // IMG TYPE VALIDATION ONLY IF NEW IMG 
+    // IMG TYPE VALIDATION ONLY IF NEW IMG
     const acceptedTypes = ["image/jpeg", "image/png"];
     if (
       !isEditSession &&
@@ -122,7 +121,7 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
       return;
     }
 
-    // SUBMIT FORM WITH FINAL IMG
+    // SUBMIT FORM WITH THE FINAL IMAGE
     if (isEditSession) {
       mutateEdit({
         newCabinData: { ...formData, image: finalImage },
