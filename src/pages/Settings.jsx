@@ -6,7 +6,7 @@ export default function Settings() {
   return (
     <>
       <Row>
-        <Heading as="h1">Update hotel settings</Heading>;
+        <Heading as="h1">Update hotel settings</Heading>
         <UpdateSettingsForm />
       </Row>
     </>
