@@ -14,11 +14,11 @@ export async function getCabins() {
 
 // Querying supabase client to create and edit a Cabin
 export async function createEditCabin(newCabin, id) {
-  // ON EDIT --> CHECK IF THE USER WILL USE THE SAME IMAGE (SUPASE URL), OR A NEW IMG (FILE TYPE)
+  // CHECK IF THE PROVIDED IMG PATH IS A SUPABASE URL (INDICATING AN EXISTING IMAGE)
   const hasImagePath = newCabin.image?.startsWith?.(supabaseUrl);
-
+  // UNIQUE IMG NAME
   const imgName = `${Math.random()}-${newCabin.image.name}`.replaceAll("/", "");
-  // CHECK IF THE IMAGE IS ALREADY IN SUPABASE, IF NOT A NEW ONE WILL BE ADDED
+  // DETERMINE IMG PATH: IF IT'S AN EXISTING IMG, USE THAT; OTHERWISE, CREATE A NEW PATH FOR THE UPLOAD
   const imgPath = hasImagePath
     ? newCabin.image
     : `${supabaseUrl}/storage/v1/object/public/cabin-image/${imgName}`;
@@ -41,17 +41,17 @@ export async function createEditCabin(newCabin, id) {
     console.error(error.message);
     throw new Error("Cabin could not be added");
   }
-
+  // IF IMG WAS AN EXISTING SUPABASE IMG, RETURN THE CABIN DATA
   if (hasImagePath) {
     return data;
   }
 
-  // UPLOAD IMG TO STORAGE
+  // IF IMG NEW, UPLOAD TO SUPABASE STORAGE
   const { error: storageError } = await supabase.storage
     .from("cabin-image")
     .upload(imgName, newCabin.image);
 
-  // DELETE CABIN IF THERE'S A ERROR
+  // DELETE CABIN IF THERE'S AN UPLOADING ERROR
   if (storageError) {
     await supabase.from("cabins").delete().eq("id", data.id);
     console.error(storageError.message);

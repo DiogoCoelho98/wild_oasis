@@ -1,11 +1,8 @@
 import supabase from "./supabase";
 
-// Fetches the current settings from the "settings" table.s.
+// Fetches the current settings from supabase
 export async function getSettings() {
-  const { data, error } = await supabase
-    .from("settings")
-    .select("*") // Selects all fields from the settings table
-    .single(); // Expects a single row to be returned (since there is only one settings row)
+  const { data, error } = await supabase.from("settings").select("*").single();
 
   if (error) {
     console.error(error);
@@ -14,13 +11,13 @@ export async function getSettings() {
   return data;
 }
 
-// Updates the existing settings in the "settings" table with the new values from `newSetting`
+// Updates the existing settings
 export async function updateSetting(newSetting) {
   const { data, error } = await supabase
     .from("settings")
-    .update(newSetting) // Updates the settings with the provided new values
+    .update(newSetting)
     .eq("id", 1) // Filters by the ID
-    .single(); // Ensures the updated data returned is a single row
+    .single();
 
   if (error) {
     console.error(error);
