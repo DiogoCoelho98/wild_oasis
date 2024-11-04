@@ -1,13 +1,12 @@
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createEditCabin } from "../../services/apiCabins";
+import { useCreateCabin } from "./useCreateCabin.js";
+import { useEditCabin } from "./useEditCabin.js";
 import styled from "styled-components";
 import Input from "../../ui/Input";
 import Form from "../../ui/Form";
 import Button from "../../ui/Button";
 import FileInput from "../../ui/FileInput";
 import Textarea from "../../ui/Textarea";
-import toast from "react-hot-toast";
 
 const FormRow = styled.div`
   display: grid;
@@ -47,7 +46,7 @@ const Error = styled.span`
 export default function CreateCabinForm({ cabinToEdit = {} }) {
   const { id: editId, ...editValues } = cabinToEdit;
 
-  // DETERMINE IF THE CABIN WILL BE CREATED OR EDITED
+  // BOOLEAN TO DETERMINE IF CREATE/EDIT
   const isEditSession = Boolean(editId);
 
   const {
@@ -61,44 +60,18 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
     defaultValues: isEditSession ? editValues : {},
   });
 
-  const queryClient = useQueryClient();
-  const { mutate: mutateCreate, isPending: isCreating } = useMutation({
-    mutationFn: createEditCabin,
-    onSuccess: () => {
-      toast.success("Cabin added successfully");
-      queryClient.invalidateQueries({
-        queryKey: ["cabins"],
-      });
-      reset();
-    },
-    onError: (error) => {
-      const message =
-        error.response?.data?.message || error.message || "An error occurred";
-      toast.error(message);
-    },
-  });
+  // CREATE A CABIN
+  const { isCreating, createCabin } = useCreateCabin();
 
-  const { mutate: mutateEdit, isPending: isEditing } = useMutation({
-    mutationFn: ({ newCabinData, id }) => createEditCabin(newCabinData, id),
-    onSuccess: () => {
-      toast.success("Cabin edited successfully");
-      queryClient.invalidateQueries({
-        queryKey: ["cabins"],
-      });
-      reset();
-    },
-    onError: (error) => {
-      const message =
-        error.response?.data?.message || error.message || "An error occurred";
-      toast.error(message);
-    },
-  });
+  // EDIT A CABIN
+  const { isEditing, editCabin } = useEditCabin();
 
   // PENDING STATE WHEN CREATING/EDITING
   const isWorking = isCreating || isEditing;
 
+  // FORM DATA SUBMISSION
   function handleOnSubmit(formData) {
-    // DETERMINE THE IMG: NEW OR EXISTING
+    // CHECK IF IMAGE ALREADY EXISTS IN DB
     const image =
       typeof formData.image === "string" ? formData.image : formData.image[0];
 
@@ -106,7 +79,7 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
     const finalImage =
       isEditSession && !formData.image[0] ? editValues.image : image;
 
-    // IMG TYPE VALIDATION ONLY IF NEW IMG
+    // VALIDATION FOR NEW IMAGES
     const acceptedTypes = ["image/jpeg", "image/png"];
     if (
       !isEditSession &&
@@ -121,21 +94,32 @@ export default function CreateCabinForm({ cabinToEdit = {} }) {
       return;
     }
 
-    // SUBMIT FORM WITH THE FINAL IMAGE
+    // FORM SUBMISSION
     if (isEditSession) {
-      mutateEdit({
+      // EDIT CABIN
+      editCabin({
         newCabinData: { ...formData, image: finalImage },
         id: editId,
       });
     } else {
-      mutateCreate({ ...formData, image: finalImage });
+      // CREATE CABIN
+      createCabin(
+        { ...formData, image: finalImage },
+        {
+          onSuccess: () => {
+            reset();
+          },
+        }
+      );
     }
   }
 
+  // FORM ERRORS
   function handleErrors(formErrors) {
     /* console.log(formErrors); */
   }
 
+  // FORM VALIDATION
   const formValidation = {
     name: {
       required: "Cabin name cannot be empty",
